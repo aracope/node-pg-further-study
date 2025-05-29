@@ -1,0 +1,33 @@
+{
+  "name": "express-biztime",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "test": "jest --watchAll",
+    "test:coverage": "jest --coverage",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aracope/node-pg.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aracope/node-pg/issues"
+  },
+  "homepage": "https://github.com/aracope/node-pg#readme",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "supertest": "^7.1.1"
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "description": ""
+}
