@@ -64,17 +64,42 @@ router.post("/", async function (req, res, next) {
 router.put("/:id", async function (req, res, next) {
   try {
     const { id } = req.params;
-    const { amt } = req.body;
+    const { amt, paid } = req.body;
 
-    const result = await db.query(
-      `UPDATE invoices SET amt=$1 WHERE id=$2
-       RETURNING id, comp_code, amt, paid, add_date, paid_date`,
-      [amt, id]
+    // Validate required fields
+    if (amt === undefined || paid === undefined) {
+      throw new ExpressError("Must include 'amt' and 'paid' in request body", 400);
+    }
+
+    // Get current invoice
+    const currResult = await db.query(
+      `SELECT paid, paid_date FROM invoices WHERE id = $1`,
+      [id]
     );
 
-    if (result.rows.length === 0) {
+    const invoice = currResult.rows[0];
+
+    if (!invoice) {
       throw new ExpressError(`Invoice not found: ${id}`, 404);
     }
+
+    let paidDate = invoice.paid_date;
+
+    // Determine new paid_date value
+    if (!invoice.paid && paid) {
+      paidDate = new Date();
+    } else if (invoice.paid && !paid) {
+      paidDate = null;
+    }
+
+    // Update invoice
+    const result = await db.query(
+      `UPDATE invoices 
+       SET amt=$1, paid=$2, paid_date=$3
+       WHERE id=$4
+       RETURNING id, comp_code, amt, paid, add_date, paid_date`,
+      [amt, paid, paidDate, id]
+    );
 
     return res.json({ invoice: result.rows[0] });
   } catch (err) {

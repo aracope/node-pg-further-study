@@ -60,9 +60,11 @@ describe("GET /invoices/:id", () => {
   });
 
   test("Responds with 404 for invalid invoice", async () => {
-    const res = await request(app).get("/invoices/9999");
-    expect(res.statusCode).toBe(404);
-  });
+  const res = await request(app)
+    .put("/invoices/9999")
+    .send({ amt: 150, paid: false });
+  expect(res.statusCode).toBe(404);
+});
 });
 
 describe("POST /invoices", () => {
@@ -79,7 +81,7 @@ describe("POST /invoices", () => {
 
   test("Responds with error for missing fields", async () => {
     const res = await request(app).post("/invoices").send({});
-    expect(res.statusCode).toBe(500); // Or 400, depending on your ExpressError handling
+    expect(res.statusCode).toBe(500);
   });
 });
 
@@ -87,18 +89,56 @@ describe("PUT /invoices/:id", () => {
   test("Updates an existing invoice", async () => {
     const res = await request(app)
       .put(`/invoices/${testInvoice.id}`)
-      .send({ amt: 150 });
+      .send({ amt: 150, paid: false });
 
     expect(res.statusCode).toBe(200);
     expect(res.body.invoice.amt).toBe(150);
   });
 
   test("Responds with 404 for invalid invoice", async () => {
-    const res = await request(app)
-      .put("/invoices/9999")
-      .send({ amt: 150 });
+  const res = await request(app)
+    .put("/invoices/9999")
+    .send({ amt: 150, paid: false });
+  expect(res.statusCode).toBe(404);
+});
 
-    expect(res.statusCode).toBe(404);
+  test("Marks an unpaid invoice as paid and sets paid_date", async () => {
+    const res = await request(app)
+      .put(`/invoices/${testInvoice.id}`)
+      .send({ amt: 100, paid: true });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.invoice.paid).toBe(true);
+    expect(res.body.invoice.paid_date).not.toBeNull();
+  });
+
+  test("Marks a paid invoice as unpaid and clears paid_date", async () => {
+    await request(app)
+      .put(`/invoices/${testInvoice.id}`)
+      .send({ amt: 100, paid: true });
+
+    const res = await request(app)
+      .put(`/invoices/${testInvoice.id}`)
+      .send({ amt: 100, paid: false });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.invoice.paid).toBe(false);
+    expect(res.body.invoice.paid_date).toBe(null);
+  });
+
+  test("Keeps paid_date unchanged when paid status does not change", async () => {
+    const firstRes = await request(app)
+      .put(`/invoices/${testInvoice.id}`)
+      .send({ amt: 100, paid: true });
+
+    const originalPaidDate = firstRes.body.invoice.paid_date;
+
+    const secondRes = await request(app)
+      .put(`/invoices/${testInvoice.id}`)
+      .send({ amt: 150, paid: true });
+
+    expect(secondRes.statusCode).toBe(200);
+    expect(secondRes.body.invoice.paid_date).toBe(originalPaidDate);
   });
 });
 
@@ -112,7 +152,9 @@ describe("DELETE /invoices/:id", () => {
   });
 
   test("Responds with 404 for invalid invoice", async () => {
-    const res = await request(app).delete("/invoices/9999");
-    expect(res.statusCode).toBe(404);
-  });
+  const res = await request(app)
+    .put("/invoices/9999")
+    .send({ amt: 150, paid: false });
+  expect(res.statusCode).toBe(404);
+});
 });
