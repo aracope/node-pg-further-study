@@ -59,28 +59,26 @@ describe("POST /companies", () => {
     const res = await request(app)
       .post("/companies")
       .send({
-        code: "newco",
-        name: "NewCo",
+        name: "New Company!",
         description: "The newest of cos"
       });
 
     expect(res.statusCode).toBe(201);
     expect(res.body).toEqual({
       company: {
-        code: "newco",
-        name: "NewCo",
+        code: "new-company",
+        name: "New Company!",
         description: "The newest of cos"
       }
     });
   });
 
-  test("Responds with 400 for duplicate code", async () => {
-    const res = await request(app)
-      .post("/companies")
-      .send({
-        code: testCompany.code,
-        name: "Duplicate",
-        description: "Should not be created"
+  test("Responds with 400 for duplicate company name that slugifies to same code", async () => {
+  const res = await request(app)
+    .post("/companies")
+    .send({
+      name: "Test Company", // This slugifies to "test-company"
+      description: "Duplicate test company"
       });
 
     expect(res.statusCode).toBe(400);
